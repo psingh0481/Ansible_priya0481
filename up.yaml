@@ -1,0 +1,24 @@
+- name: Deploy MySQL and Apply Migrations
+  hosts: localhost
+  become: yes
+  tasks:
+    - name: Start MySQL Service
+      service:
+        name: mysql
+        state: started
+      ignore_errors: yes
+
+    - name: Ensure database exists
+      mysql_db:
+        name: subscribers_db
+        state: present
+        login_user: flyway_user
+        login_password: flyway_pass
+
+    - name: Run Flyway Migrations
+      command: flyway -url=jdbc:mysql://localhost/subscribers_db -user=flyway_user -password=flyway_pass migrate
+      register: flyway_output
+
+    - name: Display Flyway Output
+      debug:
+        msg: "{{ flyway_output.stdout }}"
