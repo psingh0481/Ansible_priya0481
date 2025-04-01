@@ -1,24 +1,30 @@
-- name: Deploy MySQL and Apply Migrations
-  hosts: localhost
-  become: yes
+- name: Deploy MySQL and Apply Flyway Migrations
+  hosts: localhost          # Targeting the local machine
+  become: yes               # Elevate privileges (sudo) when needed
   tasks:
     - name: Start MySQL Service
+      # Ensure that the MySQL service is running.
+      # This task attempts to start the MySQL service.
       service:
-        name: mysql
-        state: started
-      ignore_errors: yes
+        name: mysql         # Adjust if your MySQL service name is different
+        state: started      # Desired state is 'started'
+      ignore_errors: yes      # Continue playbook execution even if starting MySQL fails
 
-    - name: Ensure database exists
+    - name: Ensure 'subscribers_db' database exists
+      # Create the 'subscribers_db' database if it doesn't exist.
       mysql_db:
-        name: subscribers_db
-        state: present
-        login_user: flyway_user
-        login_password: flyway_pass
+        name: subscribers_db  # Target database name
+        state: present        # Ensure that the database is present
+        login_user: flyway_user     # MySQL user with permissions to create databases
+        login_password: flyway_pass # Password for the MySQL user
 
     - name: Run Flyway Migrations
+      # Execute Flyway migrations to update the database schema.
+      # Adjust the Flyway command parameters as needed for your environment.
       command: flyway -url=jdbc:mysql://localhost/subscribers_db -user=flyway_user -password=flyway_pass migrate
-      register: flyway_output
+      register: flyway_output   # Save the output of the Flyway command for later debugging
 
-    - name: Display Flyway Output
+    - name: Display Flyway Migration Output
+      # Display the output from the Flyway migration command for debugging purposes.
       debug:
         msg: "{{ flyway_output.stdout }}"
