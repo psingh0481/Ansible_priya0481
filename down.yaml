@@ -1,20 +1,25 @@
-- name: Stop MySQL and create migration
-  hosts: localhost
-  become: yes
+- name: Stop MySQL and Create Migration Backup
+  hosts: localhost            # Targeting the local machine
+  become: yes                 # Execute tasks with elevated privileges
   tasks:
     - name: Dump new data to a SQL file
+      # Export the 'subscribers_db' database to a backup SQL file using mysqldump.
+      # Adjust the credentials, socket path, and database name as required.
       shell: mysqldump -u root -p'Software@2025' --socket=/var/run/mysqld/mysqld.sock subscribers_db > /tmp/subscribers_backup.sql
-      register: dump_result
-      changed_when: false
+      register: dump_result   # Save the command output in a variable for debugging
+      changed_when: false     # This task is informational; don't mark as 'changed'
 
     - name: Show dump output (for debugging)
+      # Output the result of the mysqldump command to help with troubleshooting.
       debug:
         var: dump_result
 
     - name: Stop MySQL service
+      # Stop the MySQL service to prepare for the migration process.
       service:
-        name: mysql
-        state: stopped
+        name: mysql          # Name of the MySQL service (adjust if different)
+        state: stopped       # Ensure the service is stopped
 
     - name: Archive the backup file
+      # Move and rename the backup file to the user's home directory for archival.
       command: mv /tmp/subscribers_backup.sql ~/subscribers_migration.sql
